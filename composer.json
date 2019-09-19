@@ -1,0 +1,39 @@
+{
+    "name": "jerome-savin/uccello-email-client",
+    "description": "An email client for Uccello",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jérôme Savin",
+            "email": "jsavin@jsdev.fr"
+        }
+    ],
+    "require": {
+        "uccello/uccello": "1.0.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "JeromeSavin\\UccelloEmailClient\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JeromeSavin\\UccelloEmailClient\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JeromeSavin\\UccelloEmailClient\\Providers\\AppServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
