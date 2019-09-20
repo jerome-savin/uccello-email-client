@@ -21,7 +21,7 @@ class MailClientController extends Controller
 
         $accounts = EmailAccount::where('user_id', auth()->id())->get();
         if ($accounts->count() === 0) {
-            return redirect(ucroute('uccello.mail.mails.manage', $domain));
+            return redirect(ucroute('uccello.mail.manage', $domain));
         }
 
         $messages = Office365::getEmails($this->getAccessToken($accounts->first()), 50);
@@ -33,6 +33,30 @@ class MailClientController extends Controller
             'user'      => $user,
             'messages'  => $messages
         ]);
+    }
+
+    public function mailsFromTo($address)
+    {
+        $mails = null;
+        $accounts = EmailAccount::where('user_id', auth()->id())->get();
+        if($accounts->count()>0)
+        {
+            $graph = new Graph();
+            foreach($accounts as $account)
+            {
+                $mails = [];
+                $graph->setAccessToken($this->getAccessToken($account));
+
+                $filter = '$search="participants:'.$address.'"';
+
+                $acc_mails = $graph->createRequest('GET', '/me/messages?' .$filter)
+                    ->setReturnType(Model\Message::class)
+                    ->execute();
+                if(is_array($acc_mails))
+                    $mails = array_merge($mails, $acc_mails);
+            }
+        }   
+        return $mails;
     }
 
     public function manage(?Domain $domain, Module $module, Request $request)
@@ -126,7 +150,7 @@ class MailClientController extends Controller
                 $tokenDb->save();
 
                 // Redirect back to home page
-                return redirect(ucroute('uccello.mail.mails.manage', $domain, $module));
+                return redirect(ucroute('uccello.mail.manage', $domain, $module));
             }
             catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
                 exit('ERROR getting tokens: '.$e->getMessage());

@@ -21,9 +21,9 @@ Route::middleware('web', 'auth')
 
     Route::get($domainParam.'/o365/mails', 'MailClientController@mails')
         ->defaults('module', 'mail-client')
-        ->name('mails');
+        ->name('list');
 
     Route::get($domainParam.'/o365/manage', 'MailClientController@manage')
         ->defaults('module', 'mail-client')
-        ->name('mails.manage');
+        ->name('manage');
 });

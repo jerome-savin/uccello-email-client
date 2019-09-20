@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "uccello/uccello": "1.0.*"
+        "uccello/uccello": "1.0.*",
+        "arrilot/laravel-widgets": "^3.13"
     },
     "autoload": {
         "psr-4": {
