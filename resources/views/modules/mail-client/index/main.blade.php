@@ -43,6 +43,9 @@
     </div>
 @endsection
 
+@section('extra-meta')
+    <meta http-equiv="refresh" content="60"/>
+@append
 
 
 {{-- @section('script')
