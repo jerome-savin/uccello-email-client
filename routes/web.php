@@ -15,6 +15,10 @@ Route::middleware('web', 'auth')
         ->defaults('module', 'mail-client')    
         ->name('signin');
 
+    Route::get($domainParam.'/o365/account/remove', 'MailClientController@remove')
+        ->defaults('module', 'mail-client')
+        ->name('remove');
+
     Route::get($domainParam.'/o365/redirect', 'MailClientController@gettoken')
         ->defaults('module', 'mail-client')
         ->name('redirect');
@@ -26,4 +30,8 @@ Route::middleware('web', 'auth')
     Route::get($domainParam.'/o365/manage', 'MailClientController@manage')
         ->defaults('module', 'mail-client')
         ->name('manage');
+
+    Route::post($domainParam.'/o365/mails/{account}/{folder}', 'MailClientController@folderMails')
+        ->defaults('module', 'mail-client')
+        ->name('folder.mails');
 });

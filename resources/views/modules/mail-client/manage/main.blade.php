@@ -32,7 +32,7 @@
                             <span class="title"><b>{{ $account->username }}</b></span>
                             <p>Microsoft Outlook</p>
 
-                            <a href="{{ ucroute('calendar.account.remove', $domain, $module, ['id' => $account->id]) }}"
+                            <a href="{{ ucroute('uccello.mail.remove', $domain, $module, ['id' => $account->id]) }}"
                                 class="secondary-content primary-text"
                                 data-tooltip="{{ uctrans('button.delete_account', $module) }}"
                                 data-position="left"

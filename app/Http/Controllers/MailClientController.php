@@ -1,7 +1,7 @@
 <?php
 
 namespace JeromeSavin\UccelloEmailClient\Http\Controllers;
-use Moathdev\Office365\Facade\Office365;
+// use Moathdev\Office365\Facade\Office365;
 use Microsoft\Graph\Graph;
 use Microsoft\Graph\Model;
 use Carbon\Carbon;
@@ -18,20 +18,48 @@ class MailClientController extends Controller
     {
         $this->preProcess($domain, $module, $request);
 
+        $o365 = new Office365Controller();
 
         $accounts = EmailAccount::where('user_id', auth()->id())->get();
         if ($accounts->count() === 0) {
             return redirect(ucroute('uccello.mail.manage', $domain));
         }
 
-        $messages = Office365::getEmails($this->getAccessToken($accounts->first()), 50);
-        $user = Office365::getUserInfo($this->getAccessToken($accounts->first()));
+        foreach($accounts as $account)
+        {
+            $folders = $o365->getFolders($this->getAccessToken($account));
+            foreach($folders as $folder)
+            {
+                if($folder->getChildFolderCount()>0)
+                {
+                    $folder->setChildFolders($o365->getSubFolders($folder->getId(), $this->getAccessToken($account)));
+                }
+            }
+            $account->folders = $folders;
+        }
+
 
         $this->viewName = 'index.main';
         return $this->autoView([
             'accounts'  => $accounts,
+            'first_account_id' => $accounts->first()->id,
+        ]);
+    }
+
+    public function folderMails(Domain $domain, $accountId, $folder, Request $request)
+    {
+        $o365 = new Office365Controller();
+        $accounts = EmailAccount::where('user_id', auth()->id())->get();
+        $account = EmailAccount::find($accountId);
+        $messages = $o365->getEmails($this->getAccessToken($account), 50, $folder);
+        $user = $o365->getUser($this->getAccessToken($account));
+        $m_folder = $o365->getFolders($this->getAccessToken($account), $folder);
+
+        return view('uccello-email-client::modules.mail-client.index.mails',[
+            'accounts'  => $accounts,
             'user'      => $user,
-            'messages'  => $messages
+            'messages'  => $messages,
+            'folder'    => $m_folder,
         ]);
     }
 
@@ -41,17 +69,12 @@ class MailClientController extends Controller
         $accounts = EmailAccount::where('user_id', auth()->id())->get();
         if($accounts->count()>0)
         {
-            $graph = new Graph();
+            $o365 = new Office365Controller();
+            $mails = [];
             foreach($accounts as $account)
             {
-                $mails = [];
-                $graph->setAccessToken($this->getAccessToken($account));
+                $acc_mails = $o365->mailsFromTo($this->getAccessToken($account), $address);
 
-                $filter = '$search="participants:'.$address.'"';
-
-                $acc_mails = $graph->createRequest('GET', '/me/messages?' .$filter)
-                    ->setReturnType(Model\Message::class)
-                    ->execute();
                 if(is_array($acc_mails))
                     $mails = array_merge($mails, $acc_mails);
             }
@@ -75,25 +98,24 @@ class MailClientController extends Controller
 
     public function signin()
     {
-        // Initialize the OAuth client
-        $oauthClient = new \League\OAuth2\Client\Provider\GenericProvider([
-            'clientId'                => config('Office365.appId'),
-            'clientSecret'            => config('Office365.secret'),
-            'redirectUri'             => config('Office365.redirect_url'),
-            'urlAuthorize'            => config('Office365.authority') . config('Office365.authority_endpoint'),
-            'urlAccessToken'          => config('Office365.authority') . config('Office365.authority_token'),
-            'urlResourceOwnerDetails' => '',
-            'scopes'                  => config('Office365.scopes'),
-        ]);
+        $o365 = new Office365Controller();
+        $authorizationUrl = $o365->login(session());
+        // dd(session('oauth_state'));
 
-        // Generate the auth URL
-        $authorizationUrl = $oauthClient->getAuthorizationUrl();
-
-        // Save client state so we can validate in response
-        session()->put('oauth_state', $oauthClient->getState());
-
-        // Redirect to authorization endpoint
         return redirect($authorizationUrl);
+    }
+
+    public function remove(?Domain $domain, Request $request)
+    {
+
+        $module = ucmodule('mail-client');
+
+        $this->preProcess($domain, $module, $request);
+
+        $account = EmailAccount::find($request->input('id'));
+        $account->delete();
+
+        return redirect(ucroute('uccello.mail.manage', $domain, $module));
     }
 
     public function gettoken(?Domain $domain, Module $module)
@@ -104,36 +126,21 @@ class MailClientController extends Controller
         if (isset($_GET['code'])) {
             // Check that state matches
             if (empty($_GET['state']) || ($_GET['state'] !== session('oauth_state'))) {
+                // var_dump(session('oauth_state'));
+                // dd(session('oauth_state'));
                 exit('State provided in redirect does not match expected value.');
             }
 
             // Clear saved state
             session()->forget('oauth_state');
 
-            // Initialize the OAuth client
-            $oauthClient = new \League\OAuth2\Client\Provider\GenericProvider([
-                'clientId'                => config('Office365.appId'),
-                'clientSecret'            => config('Office365.secret'),
-                'redirectUri'             => config('Office365.redirect_url'),
-                'urlAuthorize'            => config('Office365.authority') . config('Office365.authority_endpoint'),
-                'urlAccessToken'          => config('Office365.authority') . config('Office365.authority_token'),
-                'urlResourceOwnerDetails' => '',
-                'scopes'                  => config('Office365.scopes'),
-            ]);
+            $o365 = new Office365Controller;
 
             try {
-                // Make the token request
-                $accessToken = $oauthClient->getAccessToken('authorization_code', [
-                    'code' => $_GET['code']
-                ]);
 
+                $accessToken = $o365->getAccessToken($_GET['code']);
 
-                //Graph instanciation to retrieve user email
-                $graph = new Graph();
-                $graph->setAccessToken($accessToken->getToken());
-                $user = $graph->createRequest('GET', '/me')
-                                ->setReturnType(Model\User::class)
-                                ->execute();
+                $user = $o365->getUser($accessToken->token);
 
                 // Create or retrieve token from database
                 $tokenDb = EmailAccount::firstOrNew([
@@ -143,9 +150,9 @@ class MailClientController extends Controller
                 ]);
 
 
-                $tokenDb->token = $accessToken->getToken();
-                $tokenDb->refresh_token = $accessToken->getRefreshToken();
-                $tokenDb->expiration = $accessToken->getExpires();
+                $tokenDb->token = $accessToken->token;
+                $tokenDb->refresh_token = $accessToken->refreshToken;
+                $tokenDb->expiration = $accessToken->expires;
 
                 $tokenDb->save();
 
@@ -169,27 +176,15 @@ class MailClientController extends Controller
         if($emailAccount->expiration <= $now)
         // Token is expired (or very close to it) so let's refresh
         {
-            // Initialize the OAuth client
-            $oauthClient = new \League\OAuth2\Client\Provider\GenericProvider([
-                'clientId'                => env('OAUTH_APP_ID'),
-                'clientSecret'            => env('OAUTH_APP_PASSWORD'),
-                'redirectUri'             => env('OAUTH_REDIRECT_URI'),
-                'urlAuthorize'            => env('OAUTH_AUTHORITY').env('OAUTH_AUTHORIZE_ENDPOINT'),
-                'urlAccessToken'          => env('OAUTH_AUTHORITY').env('OAUTH_TOKEN_ENDPOINT'),
-                'urlResourceOwnerDetails' => '',
-                'scopes'                  => env('OAUTH_SCOPES')
-            ]);
+            $o365 = new Office365Controller;
 
             try {
-                $newToken = $oauthClient->getAccessToken('refresh_token', [
-                'refresh_token' => $emailAccount->refresh_token
-                ]);
+                $newToken = $o365->getAccessToken($emailAccount->refresh_token, 'refresh_token');
 
-                // Store the new values
 
-                $emailAccount->token = $newToken->getToken();
-                $emailAccount->refresh_token = $newToken->getRefreshToken();
-                $emailAccount->expiration = $newToken->getExpires();
+                $emailAccount->token = $newToken->token;
+                $emailAccount->refresh_token = $newToken->refreshToken;
+                $emailAccount->expiration = $newToken->expires;
 
                 $emailAccount->save();
 
@@ -203,19 +198,19 @@ class MailClientController extends Controller
         return $emailAccount->token;
     }
 
-    public function initClient($accountId)
-    {
-        $tokenDb = EmailAccount::where([
-            'service_name'  => 'o365',
-            'user_id'       => auth()->id(),
-            'id'            => $accountId,
-        ])->first();
+    // public function initClient($accountId)
+    // {
+    //     $tokenDb = EmailAccount::where([
+    //         'service_name'  => 'o365',
+    //         'user_id'       => auth()->id(),
+    //         'id'            => $accountId,
+    //     ])->first();
 
-        $graph = new Graph();
-        $graph->setAccessToken(
-            $this->getAccessToken($tokenDb)
-        );
+    //     $graph = new Graph();
+    //     $graph->setAccessToken(
+    //         $this->getAccessToken($tokenDb)
+    //     );
 
-        return $graph;
-    }
+    //     return $graph;
+    // }
 }

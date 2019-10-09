@@ -12,8 +12,10 @@ return [
     'cancel' => 'Annuler',
     'module' => 'Module',
     '_field' => 'Champ',
-
+    'mails_unread' => ':count mails non lus',
+    'menu' => 'Menu',
     'save' => 'ENREGISTRER',
+    'emails' => 'Emails',
 
     'empty' => [
         'account' => 'Aucun compte pour le moment.',
