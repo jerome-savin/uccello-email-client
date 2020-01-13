@@ -14,6 +14,16 @@ function loadMails(folder, account)
             $('#mail-container').html(response);
             $('.tooltipped').tooltip();
             $('#calendar-loader').css('visibility', 'hidden')
+
+            $( ".toggle_preview.preview" ).click(function() {
+                $(this).parent().find('.toggle_preview.body').toggle();
+                $(this).toggle()
+            });
+
+            $( ".toggle_preview.body" ).click(function() {
+                $(this).parent().find('.toggle_preview.preview').toggle();
+                $(this).toggle()
+            });
         }
     }); 
 }
@@ -21,8 +31,6 @@ function loadMails(folder, account)
 $( document ).ready(function() {
     let folder = 'inbox';
     let account = $('meta[name="first_account_id"]').attr('content')
-    console.log(account);
-    console.log(folder);
 
     $.ajaxSetup({
         headers: {
@@ -37,6 +45,7 @@ $( document ).ready(function() {
     });
     loadMails(folder, account);
     window.setInterval(function(){
-        loadMails(folder);
+        loadMails(folder, account);
     }, 60000);
+
 });
