@@ -95,6 +95,17 @@ class Office365Controller extends Controller
             ->execute();
     }
 
+    public function mailsKeyword($user_access_token, $keyword)
+    {
+        $this->graph->setAccessToken($user_access_token);
+        
+        $filter = '$search="Subject:'.$keyword.'"';
+
+        return $this->graph->createRequest('GET', '/me/messages?' .$filter)
+            ->setReturnType(Model\Message::class)
+            ->execute();
+    }
+
     public function getFolders($user_access_token, $folder = null)
     {
         $this->graph->setAccessToken($user_access_token);

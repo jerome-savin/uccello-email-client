@@ -67,20 +67,39 @@ class MailClientController extends Controller
     {
         $mails = null;
         $accounts = EmailAccount::where('user_id', auth()->id())->get();
-        if($accounts->count()>0)
-        {
+        if ($accounts->count()>0) {
             $o365 = new Office365Controller();
             $mails = [];
-            foreach($accounts as $account)
-            {
+            foreach ($accounts as $account) {
                 $acc_mails = $o365->mailsFromTo($this->getAccessToken($account), $address);
 
-                if(is_array($acc_mails))
+                if (is_array($acc_mails)) {
                     $mails = array_merge($mails, $acc_mails);
+                }
             }
-        }   
+        }
         return $mails;
     }
+
+    public function mailsKeyword($keyword)
+    {
+        $mails = null;
+        $accounts = EmailAccount::where('user_id', auth()->id())->get();
+        if ($accounts->count()>0) {
+            $o365 = new Office365Controller();
+            $mails = [];
+            foreach ($accounts as $account) {
+                $acc_mails = $o365->mailsKeyword($this->getAccessToken($account), $keyword);
+
+                if (is_array($acc_mails)) {
+                    $mails = array_merge($mails, $acc_mails);
+                }
+            }
+        }
+        return $mails;
+    }
+
+    
 
     public function manage(?Domain $domain, Module $module, Request $request)
     {

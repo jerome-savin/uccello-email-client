@@ -31,16 +31,15 @@ class EmailsRelated extends AbstractWidget
 
         $field = $this->config['data']->field ?? 'email';
 
-        if($record->$field)
-        {
-            $address = $record->email;
+        if ($record->$field) {
+            $search = $record->$field;
 
-            
-
-            $column = new \StdClass;
-            $column->name = 'type';
-            $column->label = 'Type';
-            $columns[] = $column;
+            if (strpos($search, '@')) {
+                $column = new \StdClass;
+                $column->name = 'type';
+                $column->label = 'Type';
+                $columns[] = $column;
+            }
 
             $column = new \StdClass;
             $column->name = 'subject';
@@ -60,16 +59,20 @@ class EmailsRelated extends AbstractWidget
             $domain = ucdomain($this->config['domain']);
 
             $emailController = new \JeromeSavin\UccelloEmailClient\Http\Controllers\MailClientController();
+            if (strpos($search, '@')) {
+                $mails = $emailController->mailsFromTo($search);
+            } else {
+                $mails = $emailController->mailsKeyword($search);
+            }
             
-            $mails = $emailController->mailsFromTo($address);            
-            if(is_array($mails))
-            {
-                usort($mails, function ($a, $b) { return ($a->getReceivedDateTime() < $b->getReceivedDateTime()); });
+            if (is_array($mails)) {
+                usort($mails, function ($a, $b) {
+                    return ($a->getReceivedDateTime() < $b->getReceivedDateTime());
+                });
 
-                foreach($mails as $mail)
-                {
+                foreach ($mails as $mail) {
                     $email = new \StdClass;
-                    $email->type    = $mail->getFrom()->getEmailAddress()->getaddress()==$address ? 'received' : 'sent';
+                    $email->type    = $mail->getFrom()->getEmailAddress()->getaddress()==$search ? 'received' : 'sent';
                     $email->subject = $mail->getSubject();
                     $email->preview = $mail->getBodyPreview();
                     $email->date    = $mail->getReceivedDateTime()->format("d/m/Y - H:i");
@@ -87,7 +90,8 @@ class EmailsRelated extends AbstractWidget
             'record' => $record,
             'label' => $this->config['data']->label ?? $this->config['labelForTranslation'],
             'columns' => $columns,
-            'emails' => $emails
+            'emails' => $emails,
+            'searchIsAdress' => strpos($search, '@')
         ]);
     }
 }
