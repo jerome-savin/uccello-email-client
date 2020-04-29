@@ -80,8 +80,18 @@ class EmailsRelated extends AbstractWidget
                     $emails[] = $email;
                 }
             }
+            return view('uccello-email-client::widgets.emails_related', [
+                'config' => $this->config,
+                'domain' => ucdomain($this->config['domain']),
+                'module' => $module,
+                'data' => (object) $this->config['data'],
+                'record' => $record,
+                'label' => $this->config['data']->label ?? $this->config['labelForTranslation'],
+                'columns' => $columns,
+                'emails' => $emails,
+                'searchIsAdress' => strpos($search, '@')
+            ]);
         }
-
         return view('uccello-email-client::widgets.emails_related', [
             'config' => $this->config,
             'domain' => ucdomain($this->config['domain']),
@@ -91,7 +101,7 @@ class EmailsRelated extends AbstractWidget
             'label' => $this->config['data']->label ?? $this->config['labelForTranslation'],
             'columns' => $columns,
             'emails' => $emails,
-            'searchIsAdress' => strpos($search, '@')
+            'searchIsAdress' => ''
         ]);
     }
 }
