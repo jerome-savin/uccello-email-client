@@ -29,9 +29,9 @@ class CreateWidget extends Migration
      */
     public function down()
     {
-        Widget::where('label', 'widget.contacts')
+        Widget::where('label', 'widget.emails_related')
             ->where('type', 'summary')
-            ->where('class', 'App\Widgets\Contacts')
+            ->where('class', 'JeromeSavin\UccelloEmailClient\Widgets\EmailsRelated')
             ->delete();
     }
 }
