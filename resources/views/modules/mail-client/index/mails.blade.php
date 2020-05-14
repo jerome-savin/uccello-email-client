@@ -17,7 +17,6 @@
                 <tr class="email-row" data-mailid={{ $message->getId() }}>
                     <td @if(!$message->getIsRead()) style="font-weight: bold;" @endif>{{ $message->getSubject() }}</td>
                     <td class="toggle_preview preview" style="cursor: pointer; @if(!$message->getIsRead()) font-weight: bold; @endif">{{ $message->getBodyPreview() }}</td>
-                    <td class="toggle_preview body" style="display: none; cursor: pointer; @if(!$message->getIsRead()) font-weight: bold; @endif">{!! $message->getBody()->getContent() !!}</td>
                     <td><i class="material-icons @if(!$message->getHasAttachments()) transparent-text @endif">attach_file</i></td>
                     @if($message->getFrom()->getEmailAddress()->getAddress()!=$user->getMail())
                     <td class="tooltipped" data-position="bottom" data-tooltip="{{ $message->getFrom()->getEmailAddress()->getAddress() }}">
@@ -29,7 +28,7 @@
                         {{ $to['emailAddress']['name'] }}
                     </td>
                     @endif
-                    <td style="min-width: 13rem;">{{ $message->getReceivedDateTime()->format("d/m/Y - H:i") }}</td>
+                    <td style="min-width: 13rem;">{{ \Carbon\Carbon::parse($message->getReceivedDateTime())->timeZone('Europe/Paris')->format("d/m/Y - H:i") }}</td>
                     <td style="min-width: 6rem;">
                         <a href="{{ $message->getWebLink() }}" target="_blank"><i class="material-icons">launch
                             </i></a>
