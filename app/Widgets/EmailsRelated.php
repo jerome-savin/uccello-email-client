@@ -75,7 +75,7 @@ class EmailsRelated extends AbstractWidget
                     $email->type    = $mail->getFrom()->getEmailAddress()->getaddress()==$search ? 'received' : 'sent';
                     $email->subject = $mail->getSubject();
                     $email->preview = $mail->getBodyPreview();
-                    $email->date    = $mail->getReceivedDateTime()->format("d/m/Y - H:i");
+                    $email->date    = \Carbon\Carbon::parse($mail->getReceivedDateTime())->timeZone('Europe/Paris')->format("d/m/Y - H:i");
                     $email->webLink = $mail->getWebLink();
                     $emails[] = $email;
                 }

@@ -62,7 +62,7 @@ class UserEmails extends AbstractWidget
                 $email->subject = $mail->getSubject();
                 $email->preview = substr($mail->getBodyPreview(), 0, 40);
                 $email->from    =  substr($mail->getFrom()->getEmailAddress()->getaddress(), 0, 40);;
-                $email->date    = $mail->getReceivedDateTime()->format("d/m/Y - H:i");
+                $email->date    = \Carbon\Carbon::parse($mail->getReceivedDateTime())->timeZone('Europe/Paris')->format("d/m/Y - H:i");
                 $email->webLink = $mail->getWebLink();
                 $emails[] = $email;
             }
