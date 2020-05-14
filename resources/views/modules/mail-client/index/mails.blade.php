@@ -28,7 +28,7 @@
                         {{ $to['emailAddress']['name'] }}
                     </td>
                     @endif
-                    <td style="min-width: 13rem;">{{ \Carbon\Carbon::parse($message->getReceivedDateTime())->timeZone('Europe/Paris')->format("d/m/Y - H:i") }}</td>
+                    <td style="min-width: 13rem;">{{ \Carbon\Carbon::parse($message->getReceivedDateTime())->timeZone(config('app.timezone', 'Europe/Paris'))->format("d/m/Y - H:i") }}</td>
                     <td style="min-width: 6rem;">
                         <a href="{{ $message->getWebLink() }}" target="_blank"><i class="material-icons">launch
                             </i></a>
