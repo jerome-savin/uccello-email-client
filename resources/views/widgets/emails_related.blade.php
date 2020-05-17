@@ -7,9 +7,13 @@
             {{-- Label --}}
             {{ trans($label) }}
 
-            <div class="right-align right">
-                {{-- @include('uccello::modules.default.detail.relatedlists.buttons') --}}
-            </div>
+            @yield('email.custom_buttons')
+            {{-- <div class="right-align right">
+                <a id="opportunity_email" href="#" class="waves-effect waves-light btn primary" style="width:100%">
+                    <i class="material-icons right">contact_mail</i>
+                    @lang('home.popup.new_email')
+                </a>
+            </div> --}}
         </span>
         <div class="row display-flex">
             {{-- Table --}}
