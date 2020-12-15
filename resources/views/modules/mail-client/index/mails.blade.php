@@ -17,6 +17,7 @@
                 <tr class="email-row" data-mailid={{ $message->getId() }}>
                     <td @if(!$message->getIsRead()) style="font-weight: bold;" @endif>{{ $message->getSubject() }}</td>
                     <td class="toggle_preview preview" style="cursor: pointer; @if(!$message->getIsRead()) font-weight: bold; @endif">{{ $message->getBodyPreview() }}</td>
+                    <td class="toggle_preview body" style="display: none; cursor: pointer; @if(!$message->getIsRead()) font-weight: bold; @endif">{!! $message->getBody()->getContent() !!}</td>
                     <td><i class="material-icons @if(!$message->getHasAttachments()) transparent-text @endif">attach_file</i></td>
                     @if($message->getFrom()->getEmailAddress()->getAddress()!=$user->getMail())
                     <td class="tooltipped" data-position="bottom" data-tooltip="{{ $message->getFrom()->getEmailAddress()->getAddress() }}">
